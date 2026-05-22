@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00b4d8">
+    <title>🎁 Premium Gift Sender 🎉</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header class="main-header">
+        <h1>🎁 FREE FIRE GIFT SENDER</h1>
+        <p>Premium Free Fire Gifts</p>
+    </header>
+
+    <div class="login-container" id="loginBox">
+        <h2>Authentication</h2>
+        <div class="auth-selector">
+            <button type="button" class="auth-method-btn active" data-method="direct">🔑 Direct JWT</button>
+            <button type="button" class="auth-method-btn" data-method="access">🎟️ Access Token</button>
+            <button type="button" class="auth-method-btn" data-method="eat">🍪 EAT Token</button>
+            <button type="button" class="auth-method-btn" data-method="uid_password">👤 UID + Password</button>
+        </div>
+
+        <div id="authInputs">
+            <input type="text" id="jwtInput" placeholder="Paste your JWT token here..." autocomplete="off">
+        </div>
+
+        <button id="loadBtn">LOAD GIFT STORE</button>
+        <p id="errorMsg" class="error"></p>
+    </div>
+
+    <div class="store-container" id="storeBox" style="display: none;">
+        <div class="wallet-bar">
+            <div class="wallet-item"><span class="label">Diamonds</span><span class="value" id="valDiamond">--</span></div>
+            <div class="wallet-item"><span class="label">Gold</span><span class="value" id="valGold">--</span></div>
+            <div class="wallet-item full"><span class="label">Last Topup</span><span class="value" id="valTopup">--</span></div>
+        </div>
+
+        <div class="store-header">
+            <h3>🛒 Store Items</h3>
+            <span id="giftsSent">🎁 Sent Today: 0</span>
+        </div>
+
+        <div class="category-bar" id="categoryBar">
+            <button class="cat-btn active" data-cat="All">All Items</button>
+        </div>
+
+        <div class="grid" id="itemsGrid"></div>
+    </div>
+
+    <!-- Send Gift Modal -->
+    <div id="giftModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:#00b4d8; margin-bottom:15px;">Send Gift</h2>
+            <input type="text" id="targetUid" placeholder="Enter Receiver UID" autocomplete="off">
+            <input type="text" id="giftMsg" placeholder="Message (Optional)" value="Enjoy your gift!">
+            <div class="modal-btns">
+                <button id="confirmSend" class="btn-send">CONFIRM</button>
+                <button onclick="closeModal()" class="btn-cancel">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
