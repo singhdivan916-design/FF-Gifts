@@ -71,7 +71,8 @@ def decode_jwt(token):
 
 def get_wallet_data(jwt, login_token, region):
     req = GetWallet_pb2.CSGetWalletReq(login_token=login_token, topup_rebate=False)
-    headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB53", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
+    # Updated ReleaseVersion to OB54
+    headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
     try:
         r = requests.post(f"{get_server_url(region)}/GetWallet", data=encrypt_payload(req.SerializeToString()), headers=headers, verify=False, timeout=10)
         if r.status_code == 200:
@@ -181,7 +182,8 @@ def get_store():
     if jwt_token not in STORE_CACHE:
         wallet = get_wallet_data(jwt_token, login_token, region)
         req_pb = GetGiftStoreDetails_pb2.CSGetGiftStoreDetailsReq(store_id=1)
-        headers = {"Authorization": f"Bearer {jwt_token}", "X-GA": "v1 1", "ReleaseVersion": "OB53", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
+        # Updated ReleaseVersion to OB54
+        headers = {"Authorization": f"Bearer {jwt_token}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
         try:
             r = requests.post(f"{get_server_url(region)}/GetGiftStoreDetails", data=encrypt_payload(req_pb.SerializeToString()), headers=headers, verify=False, timeout=15)
             if r.status_code == 200:
@@ -232,7 +234,8 @@ def send_gift():
     req.commodity_cnt = 1
     req.unit_price = int(price)
 
-    headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB53", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
+    # Updated ReleaseVersion to OB54
+    headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
     try:
         r = requests.post(f"{get_server_url(region)}/SendGift", data=encrypt_payload(req.SerializeToString()), headers=headers, verify=False, timeout=15)
         if r.status_code == 200:
